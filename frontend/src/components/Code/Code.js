@@ -21,6 +21,8 @@ class Code extends React.Component {
 
     this.getIt = this.getIt.bind(this);
     this.getInitialState = this.getInitialState.bind(this);
+    this.handleDbSelection = this.handleDbSelection.bind(this);
+    this.executeCommandsSequentially = this.executeCommandsSequentially.bind(this);
     this.open = this.open.bind(this);
     this.close = this.close.bind(this);
     this.setLoading = this.setLoading.bind(this);
@@ -30,7 +32,11 @@ class Code extends React.Component {
       <div className="code-container">
         <Button className='my-back-button' style={{ height: '35px', fontSize: '15px' }} onClick={() => this.props.handleButtonClick("template")}>Back</Button>
         <main>
-          <CodeInput getIt={(text, chosenDb) => this.getIt(text, chosenDb)} isLoading={this.state.isLoading} />
+          <CodeInput 
+            getIt={(text, chosenDb) => this.getIt(text, chosenDb)} 
+            onDbSelect={this.handleDbSelection}
+            isLoading={this.state.isLoading} 
+          />
         </main>
         <aside className="code-aside">
           <OutputInputs response={this.state.response} db_state={this.state.db_state} />
@@ -54,19 +60,18 @@ class Code extends React.Component {
     this.setState({ isModalOpen: false });
   }
 
-  componentDidMount() {
-    if (this.props.isLogin === true && Object.keys(this.state.db_state).length === 0) {
-      this.getInitialState();
+  getInitialState(selectedDb = null) {
+    if (this.props.isLogin === false) {
+      console.log("User not logged in, skipping state request");
+      return;
     }
-  }
-
-  getInitialState() {
+    
     this.setLoading(true);
     let string = (this.props.getCookie("login") + this.props.getCookie("password"));
     getIState(string.hashCode())
       .then(data => {
         this.setState({ db_state: data }, () => {
-          console.log(this.state.db_state);
+          console.log('DB state loaded for:', selectedDb, this.state.db_state);
         });
         this.setLoading(false);
       })
@@ -74,6 +79,78 @@ class Code extends React.Component {
         console.error('Error:', error);
         this.setLoading(false);
       });
+  }
+
+  handleDbSelection(selectedDb) {
+    console.log('Database selected:', selectedDb);
+    if (selectedDb === "ChromaDB") {
+      this.getInitialState(selectedDb);
+    } else if (selectedDb === "PostgreSQL" || selectedDb === "SQLite" || selectedDb === "MongoDB") {
+      console.log(`${selectedDb} is not yet supported for state loading`);
+      this.setState({ db_state: {} });
+    } else {
+      this.setState({ db_state: {} });
+    }
+  }
+
+  async executeCommandsSequentially(commands, hashCode, error) {
+    this.setLoading(true);
+    
+    // Массив для накопления всех результатов
+    let allResults = [];
+    
+    for (let i = 0; i < commands.length; i++) {
+      const command = commands[i].trim();
+      if (command === '') continue;
+      
+      try {
+        console.log(`Executing command ${i + 1}:`, command);
+        const data = await getCode(command, hashCode);
+        
+        if (data === "Error") {
+          allResults.push({
+            command: command,
+            result: error,
+            commandNumber: i + 1
+          });
+        } else {
+          allResults.push({
+            command: command,
+            result: data,
+            commandNumber: i + 1
+          });
+        }
+        
+        // Обновляем состояние с накопленными результатами
+        this.setState({ 
+          response: {
+            type: 'multiple_commands',
+            commands: allResults,
+            totalCommands: allResults.length
+          }
+        }, () => {
+          console.log(`Command ${i + 1} completed. Total results:`, allResults.length);
+        });
+        
+      } catch (error) {
+        console.error(`Error in command ${i + 1}:`, error);
+        allResults.push({
+          command: command,
+          result: { message: "Error occurred while executing command" },
+          commandNumber: i + 1
+        });
+        
+        this.setState({ 
+          response: {
+            type: 'multiple_commands',
+            commands: allResults,
+            totalCommands: allResults.length
+          }
+        });
+      }
+    }
+    
+    this.setLoading(false);
   }
 
   getIt(text, chosenDb) {
@@ -109,26 +186,35 @@ class Code extends React.Component {
       if (!text.includes('\n')) {
         getCode(text, string.hashCode())
           .then(data => {
-            data === "Error" ? this.setState({ response: error }) : this.setState({ response: data }, () => {
-              console.log(this.state.response)
-            });
+            if (data === "Error") {
+              this.setState({ 
+                response: {
+                  type: 'single_command',
+                  command: text,
+                  result: error
+                }
+              });
+            } else {
+              this.setState({ 
+                response: {
+                  type: 'single_command',
+                  command: text,
+                  result: data
+                }
+              }, () => {
+                console.log('Single command result:', this.state.response);
+              });
+            }
             this.setLoading(false);
           })
-          .catch(error => console.error('Error:', error));
+          .catch(error => {
+            console.error('Error:', error);
+            this.setLoading(false);
+          });
       }
       else{
         let commands = text.split('\n');
-        commands.forEach((item, index) => {
-          this.setLoading(true);
-          getCode(item, string.hashCode())
-          .then(data => {
-            data === "Error" ? this.setState({ response: error }) : this.setState({ response: data }, () => {
-              console.log(this.state.response)
-            });
-            this.setLoading(false);
-          })
-          .catch(error => console.error('Error:', error));
-        });
+        this.executeCommandsSequentially(commands, string.hashCode(), error);
       }
 
     }
