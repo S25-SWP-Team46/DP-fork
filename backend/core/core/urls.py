@@ -49,6 +49,7 @@ urlpatterns = [
     path('template/', include("templates.urls")),
     path('api/chroma_query/', chroma_query),
     path('api/chroma_state/', chroma_state),
+    path('api/', include('core.api_urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
