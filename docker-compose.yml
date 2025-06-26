@@ -1,34 +1,4 @@
 services:
-  backend:
-    build:
-      context: ./backend
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-      - mysql
-      - mongodb
-      - frontend
-      - chroma
-    environment:
-      - DEBUG=True
-      - ALLOWED_HOSTS=*
-      - SECRET_KEY=replace-this-in-prod
-      - DJANGO_SETTINGS_MODULE=core.settings
-      - POSTGRES_DB=school_db
-      - POSTGRES_USER=app_admin
-      - POSTGRES_PASSWORD=StrongPassword!
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      # Optionally keep for legacy code:
-      - DATABASE_URL=sqlite:///db.sqlite3
-    command: >
-      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-      - POSTGRES_USER=my_pg_user
-      - POSTGRES_PASSWORD=my_pg_password
-    
   chroma:
     build:
       context: ./backend/core/chroma
@@ -53,15 +23,35 @@ services:
     #- ./frontend:/app
 
   postgres:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend/core:/app
     image: postgres:15
     ports:
       - "5432:5432"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - mysql
+      - mongodb
+      - frontend
+      - chroma
     environment:
-      POSTGRES_DB: school_db
-      POSTGRES_USER: app_admin
-      POSTGRES_PASSWORD: StrongPassword!
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - SECRET_KEY=replace-this-in-prod
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - POSTGRES_DB=school_db
+      - POSTGRES_USER=app_admin
+      - POSTGRES_PASSWORD=StrongPassword!
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      # Optionally keep for legacy code:
+      - DATABASE_URL=sqlite:///db.sqlite3
+    #volumes:
+    #  - ./postgres_data:/var/lib/postgresql/data
 
   mysql:
     image: mysql:8.0
