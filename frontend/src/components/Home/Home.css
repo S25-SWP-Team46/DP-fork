@@ -1,12 +1,26 @@
 .home {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
     min-height: 60vh;
     text-align: center;
     margin-top: 35px;
-    width:100%;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 100vw;
+    padding: 0 2%;
+    margin-bottom: 40px;
+    box-sizing: border-box;
 }
 
 .home-text {
@@ -18,17 +32,23 @@
 } 
 
 .icon-row {
-    margin-top: 30px;
+    margin-top: 30px !important;
     margin-bottom: 80px;
-    margin-left: 9%;
-    margin-right: 15%;
+    margin-left: 7%;
+    padding: 0 2%;
     display: flex;
-    justify-content: left; 
-    width: 1500px;
-    margin-top: 10;
+    justify-content: center !important; 
+    max-width: 100%;
     font-size: 100px;
-    gap: 10%;
+    gap: 2%;
+    box-sizing: border-box;
+    width: 100%;
 }
+
+.icon-first-row  {
+    margin-top: 100px !important;
+}
+
 
 .iconText {
     display: flex;
@@ -36,7 +56,10 @@
     text-align: left;  
     gap: 16px;
     height: 150px;
-    width: 700px;
+    max-width: 45%;
+    min-width: 300px;
+    flex: 1;
+    justify-content: flex-start;
 }
 
 .icon {
@@ -50,13 +73,21 @@
     font-size: 24px;
     color: #51CB63;
     margin-bottom: 5px;
+    display: block;
+    text-decoration: none;
+}
+
+.title:hover {
+    color: #51CB63;
+    text-decoration: underline;
 }
 
 .description {
     font-size: 19px;
     color: #ffffff;
     font-weight: 300;
-    width: 500px;
+    max-width: 500px;
+    width: 100%;
     display: block;
     word-break: break-word;
 }
@@ -68,7 +99,8 @@
 
 .button-row {
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    align-items: center;
     gap: 20px;
 }
 

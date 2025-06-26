@@ -45,7 +45,12 @@ class CodeInput extends React.Component {
                             { value: 'MongoDB', label: 'MongoDB' },
                             { value: 'ChromaDB', label: 'ChromaDB' },
                         ]}
-                        onChange={value => this.setState({ chosenDb: value })}
+                        onChange={value => {
+                            this.setState({ chosenDb: value });
+                            if (this.props.onDbSelect) {
+                                this.props.onDbSelect(value);
+                            }
+                        }}
                     />
                     < Button className='my-orange-button-outline' type="primary" style={{ marginTop: '10px', marginLeft: '0px' }} onClick={() => this.props.getIt(this.state.code, this.state.chosenDb)} loading={this.props.isLoading} disabled={this.props.isLoading} iconPosition="end">Run Code</Button>
                 </div>

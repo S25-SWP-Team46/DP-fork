@@ -10,6 +10,8 @@ services:
       - postgres
       - mysql
       - mongodb
+      - frontend
+      - chroma
     environment:
       - DEBUG=True
       - ALLOWED_HOSTS=*
@@ -24,6 +26,19 @@ services:
       - DATABASE_URL=sqlite:///db.sqlite3
     command: >
       sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      - POSTGRES_USER=my_pg_user
+      - POSTGRES_PASSWORD=my_pg_password
+    
+  chroma:
+    build:
+      context: ./backend/core/chroma
+    volumes:
+      - ./backend/core/chroma:/app
+      - ./backend/playground:/app/playground
+    ports:
+      - "9000:9000"
+    environment:
+      - PYTHONPATH=/app
 
   frontend:
     build:

@@ -6,6 +6,11 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 from rest_framework import routers
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
 
 from classroom.views import ClassroomModelViewSet
 
@@ -28,7 +33,7 @@ schema_view = get_schema_view(
 router = routers.SimpleRouter()
 router.register(r'schema', schema.views.DBSchemaModelViewSet)
 router.register(r'classroom', ClassroomModelViewSet)
-from engines.views import chroma_query, chroma_state
+from db.views import ChromaQueryParser
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -45,8 +50,13 @@ urlpatterns = [
         schema_view.with_ui('redoc', cache_timeout=0),
         name='schema-redoc'
     ),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('test/', include("test.urls")),
     path('template/', include("templates.urls")),
+    path('db/', include("db.urls")),
+    path('api/chroma/', ChromaQueryParser.as_view()),
     path('api/chroma_query/', chroma_query),
     path('api/chroma_state/', chroma_state),
     path('api/', include('core.api_urls')),
