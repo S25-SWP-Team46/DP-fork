@@ -94,8 +94,6 @@ class Code extends React.Component {
 
   async executeCommandsSequentially(commands, hashCode, error) {
     this.setLoading(true);
-    
-    // Массив для накопления всех результатов
     let allResults = [];
     
     for (let i = 0; i < commands.length; i++) {
@@ -120,7 +118,6 @@ class Code extends React.Component {
           });
         }
         
-        // Обновляем состояние с накопленными результатами
         this.setState({ 
           response: {
             type: 'multiple_commands',
@@ -149,7 +146,6 @@ class Code extends React.Component {
       }
     }
     
-    // Обновляем состояние БД после выполнения всех команд
     this.getInitialState("Chroma");
     this.setLoading(false);
   }
@@ -206,7 +202,6 @@ class Code extends React.Component {
                 console.log('Single command result:', this.state.response);
               });
             }
-            // Обновляем состояние БД после выполнения команды
             this.getInitialState(chosenDb);
             this.setLoading(false);
           })
