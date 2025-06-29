@@ -26,21 +26,23 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     env:
-          DEBUG: false
-          SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-          POSTGRES_HOST: localhost
+      DEBUG: false
+      SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test_db
+      POSTGRES_HOST: localhost
+
     steps:
       - uses: actions/checkout@v3
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Install dependencies with cache
         uses: actions/cache@v3
@@ -49,13 +51,16 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/core/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r backend/core/requirements.txt
-      - name: Run tests
+          pip install unittest-xml-reporting
+
+      - name: Run Django tests
         run: |
           source .venv/bin/activate
-          python backend/core/manage.py test tests
+          python backend/core/manage.py test tests --testrunner=xmlrunner.extra.djangotestrunner.XMLTestRunner --noinput --verbosity=2 --output-dir=reports

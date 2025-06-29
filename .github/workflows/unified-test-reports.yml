@@ -1,0 +1,308 @@
+name: Unified Test Reports
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-and-report:
+    runs-on: ubuntu-latest
+    name: Run All Tests and Generate Unified Report
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DEBUG: false
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test_db
+      POSTGRES_HOST: localhost
+      CI: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/core/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/core/requirements.txt
+
+      - name: Install Frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Create test reports directory
+        run: mkdir -p test-reports
+
+      - name: Run Backend Tests (Pytest)
+        continue-on-error: true
+        run: |
+          cd backend
+          pytest tests/ -v \
+            --junitxml=../test-reports/backend-junit.xml \
+            --html=../test-reports/backend-report.html \
+            --self-contained-html \
+            --json-report=../test-reports/backend-report.json \
+            --cov=core \
+            --cov-report=xml:../test-reports/backend-coverage.xml \
+            --cov-report=html:../test-reports/backend-coverage-html \
+            --cov-report=term
+
+      - name: Run Django Tests
+        continue-on-error: true
+        run: |
+          cd backend/core
+          python manage.py test \
+            --testrunner=xmlrunner.extra.djangotestrunner.XMLTestRunner \
+            --noinput \
+            --verbosity=2 \
+            --output-dir=../../test-reports/django
+
+      - name: Run Frontend Tests (Jest)
+        continue-on-error: true
+        run: |
+          cd frontend
+          npm test -- \
+            --coverage \
+            --watchAll=false \
+            --testResultsProcessor=jest-junit \
+            --coverageReporters=text \
+            --coverageReporters=lcov \
+            --coverageReporters=cobertura \
+            --coverageDirectory=../test-reports/frontend-coverage
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ../test-reports
+          JEST_JUNIT_OUTPUT_NAME: frontend-junit.xml
+
+      - name: Install junitparser for report merging
+        run: pip install junitparser
+
+      - name: Merge JUnit reports
+        run: |
+          python -c "
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          from datetime import datetime
+          import glob
+          
+          # Find all JUnit XML files
+          junit_files = []
+          junit_files.extend(glob.glob('test-reports/*-junit.xml'))
+          junit_files.extend(glob.glob('test-reports/django/TEST-*.xml'))
+          
+          # Create merged report
+          root = ET.Element('testsuites')
+          root.set('name', 'Unified Test Report')
+          root.set('timestamp', datetime.now().isoformat())
+          
+          total_tests = 0
+          total_failures = 0
+          total_errors = 0
+          total_time = 0.0
+          
+          for junit_file in junit_files:
+              try:
+                  tree = ET.parse(junit_file)
+                  suite_root = tree.getroot()
+                  
+                  if suite_root.tag == 'testsuites':
+                      for testsuite in suite_root.findall('testsuite'):
+                          root.append(testsuite)
+                          total_tests += int(testsuite.get('tests', 0))
+                          total_failures += int(testsuite.get('failures', 0))
+                          total_errors += int(testsuite.get('errors', 0))
+                          total_time += float(testsuite.get('time', 0))
+                  elif suite_root.tag == 'testsuite':
+                      root.append(suite_root)
+                      total_tests += int(suite_root.get('tests', 0))
+                      total_failures += int(suite_root.get('failures', 0))
+                      total_errors += int(suite_root.get('errors', 0))
+                      total_time += float(suite_root.get('time', 0))
+              except Exception as e:
+                  print(f'Warning: Could not parse {junit_file}: {e}')
+          
+          # Set totals
+          root.set('tests', str(total_tests))
+          root.set('failures', str(total_failures))
+          root.set('errors', str(total_errors))
+          root.set('time', str(total_time))
+          
+          # Write merged report
+          tree = ET.ElementTree(root)
+          tree.write('test-reports/unified-junit-report.xml', encoding='utf-8', xml_declaration=True)
+          
+          print(f'Merged {len(junit_files)} JUnit reports')
+          print(f'Total tests: {total_tests}, Failures: {total_failures}, Errors: {total_errors}')
+          "
+
+      - name: Generate HTML summary report
+        run: |
+          python -c "
+          from pathlib import Path
+          from datetime import datetime
+          import json
+          import glob
+          
+          reports_dir = Path('test-reports')
+          
+          # Check for report files
+          reports = {
+              'backend_junit': reports_dir / 'backend-junit.xml',
+              'backend_html': reports_dir / 'backend-report.html',
+              'backend_coverage': reports_dir / 'backend-coverage.xml',
+              'frontend_junit': reports_dir / 'frontend-junit.xml',
+              'frontend_coverage': reports_dir / 'frontend-coverage',
+              'django_tests': list(reports_dir.glob('django/TEST-*.xml')),
+              'unified_junit': reports_dir / 'unified-junit-report.xml'
+          }
+          
+          html_content = f'''
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Unified Test Report</title>
+              <style>
+                  body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                  .header {{ background: #f5f5f5; padding: 20px; border-radius: 5px; }}
+                  .section {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }}
+                  .report-link {{ display: inline-block; margin: 5px 10px 5px 0; padding: 8px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 3px; }}
+                  .report-link:hover {{ background: #0056b3; }}
+                  .exists {{ color: green; }}
+                  .missing {{ color: red; }}
+              </style>
+          </head>
+          <body>
+              <div class=\"header\">
+                  <h1>Unified Test Report</h1>
+                  <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+              </div>
+              
+              <div class=\"section\">
+                  <h2>Available Reports</h2>
+          '''
+          
+          for name, path in reports.items():
+              if isinstance(path, list):
+                  if path:
+                      html_content += f'<p><strong>{name}:</strong> <span class=\"exists\">{len(path)} files found</span></p>'
+                  else:
+                      html_content += f'<p><strong>{name}:</strong> <span class=\"missing\">No files found</span></p>'
+              elif path.exists():
+                  relative_path = path.relative_to(reports_dir)
+                  html_content += f'<a href=\"{relative_path}\" class=\"report-link\">{name.replace(\"_\", \" \").title()}</a>'
+              else:
+                  html_content += f'<p><strong>{name}:</strong> <span class=\"missing\">Not found</span></p>'
+          
+          html_content += '''
+              </div>
+              
+              <div class=\"section\">
+                  <h2>Quick Links</h2>
+                  <a href=\"unified-junit-report.xml\" class=\"report-link\">Unified JUnit XML</a>
+                  <a href=\"backend-report.html\" class=\"report-link\">Backend HTML Report</a>
+                  <a href=\"backend-coverage-html/index.html\" class=\"report-link\">Backend Coverage</a>
+                  <a href=\"frontend-coverage/lcov-report/index.html\" class=\"report-link\">Frontend Coverage</a>
+              </div>
+          </body>
+          </html>
+          '''
+          
+          (reports_dir / 'index.html').write_text(html_content, encoding='utf-8')
+          print('Generated HTML summary report')
+          "
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unified-test-reports
+          path: test-reports/
+          retention-days: 30
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'Unified Test Results'
+          path: 'test-reports/unified-junit-report.xml'
+          reporter: 'jest-junit'
+
+      - name: Comment PR with test results
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && always()
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read the unified report if it exists
+            const reportPath = 'test-reports/unified-junit-report.xml';
+            if (fs.existsSync(reportPath)) {
+              const reportContent = fs.readFileSync(reportPath, 'utf8');
+              
+              // Simple XML parsing to extract test summary
+              const testsMatch = reportContent.match(/tests="(\d+)"/);
+              const failuresMatch = reportContent.match(/failures="(\d+)"/);
+              const errorsMatch = reportContent.match(/errors="(\d+)"/);
+              
+              const tests = testsMatch ? testsMatch[1] : '0';
+              const failures = failuresMatch ? failuresMatch[1] : '0';
+              const errors = errorsMatch ? errorsMatch[1] : '0';
+              const passed = parseInt(tests) - parseInt(failures) - parseInt(errors);
+              
+              const comment = `## 🧪 Test Results
+              
+              | Component | Tests | Passed | Failed | Errors |
+              |-----------|-------|--------|--------|--------|
+              | **Total** | ${tests} | ${passed} | ${failures} | ${errors} |
+              
+              ${parseInt(failures) + parseInt(errors) === 0 ? '✅ All tests passed!' : '❌ Some tests failed'}
+              
+              📊 [View detailed reports in artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }

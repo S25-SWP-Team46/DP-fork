@@ -183,5 +183,13 @@ postgres_data
 mysql_data
 mongo_data
 
+# Test reports and coverage
+test-reports/
+*.junit.xml
+TEST-*.xml
+coverage/
+htmlcov/
+.nyc_output/
+
 # Playground
 playground/
