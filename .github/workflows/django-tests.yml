@@ -58,8 +58,9 @@ jobs:
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r backend/core/requirements.txt
+          pip install unittest-xml-reporting
 
       - name: Run Django tests
         run: |
           source .venv/bin/activate
-          python backend/core/manage.py test tests
+          python backend/core/manage.py test tests --testrunner=xmlrunner.extra.djangotestrunner.XMLTestRunner --noinput --verbosity=2 --output-dir=reports
