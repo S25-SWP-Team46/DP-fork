@@ -57,9 +57,17 @@ jobs:
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r backend/core/requirements.txt
+          pip install unittest-xml-reporting
 
       - name: Run Database unit tests
         run: |
           source .venv/bin/activate
           export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
-          pytest backend/tests/test_postgres_engine.py -m "not integration" -v
+          pytest backend/tests/test_postgres_engine.py -m "not integration" -v --junitxml=report.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-test-report
+          path: report.xml
+
