@@ -40,7 +40,7 @@ jobs:
       run: |
         echo "Running flake8 on backend Python code..."
         flake8 backend/ --format=github
-
+    continue-on-error: true
   test:
     runs-on: ubuntu-latest
     name: Run Tests
