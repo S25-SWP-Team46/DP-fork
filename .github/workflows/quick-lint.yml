@@ -29,8 +29,15 @@ jobs:
         
     - name: Quick syntax check
       run: |
-        # Check for syntax errors and undefined names
-        flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Check for syntax errors and undefined names, output to file
+        flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics > flake8-syntax-report.txt
+
+    - name: Upload syntax check report
+      uses: actions/upload-artifact@v4
+      with:
+        name: db-test-report
+        path: flake8-syntax-report.txt
+
         
     - name: Full lint check
       run: |
