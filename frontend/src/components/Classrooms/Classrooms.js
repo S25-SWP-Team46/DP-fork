@@ -111,16 +111,12 @@ class ClassRooms extends React.Component {
                   </li>
                 </ul>
               </div>
-
-              
             </div>
           ))}
         </div>
       </div>
     );
   }
-
-
 
 }
 

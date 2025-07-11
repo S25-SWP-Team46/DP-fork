@@ -6,7 +6,8 @@ import Account from "./components/Account/Account";
 import Code from "./components/Code/Code";
 import Home from "./components/Home/Home";
 import ClassRooms from "./components/Classrooms/Classrooms";
-import ExactClassroom from "./components/ExactClassroom/ExactClassroom";
+import ExactClassroom from "./components/Classrooms/ExactClassroom/ExactClassroom";
+import AllAssignments from "./components/Classrooms/ExactClassroom/AllAssignments/AllAssignments"
 import Template from "./components/Template/Template";
 import CookieNotice from "./components/CookieNotice/CookieNotice";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
@@ -53,6 +54,8 @@ class App extends React.Component {
       isModalOpen: false,
       activeButton: lastPage || 'home',
       selectedClassroom: selectedClassroom,
+      allAssignments: [],
+      allAssignmentsIsActive: true,
       isHintModalOpen: false,
       isTableModalOpen: false,
       isInitialized: false, // Флаг для отслеживания завершения инициализации
@@ -205,7 +208,19 @@ class App extends React.Component {
         }
         return (
           <div>
-            <ExactClassroom classroom={this.state.selectedClassroom}/>
+            <ExactClassroom 
+              classroom={this.state.selectedClassroom}
+              handleAllAssignmentsClick={this.handleAllAssignmentsClick}
+              />
+          </div>
+        )
+      case "allAssignments":
+        return (
+          <div>
+            <AllAssignments 
+              assignments={this.state.allAssignments}
+              isActive={this.state.allAssignmentsIsActive}
+            />
           </div>
         );
       case "code":
@@ -424,6 +439,15 @@ class App extends React.Component {
     console.log('Logout event received:', event.detail);
     this.logOut();
   };
+
+   handleAllAssignmentsClick = (assignments, isActive) => {
+    this.setState({
+      page: "allAssignments",
+      allAssignments: assignments,
+      allAssignmentsIsActive: isActive
+    });
+  }
+
 }
 
 export default App;
