@@ -1,5 +1,6 @@
 import React from "react";
 import { Typography, Button } from "antd";
+import { FaRegFileCode } from "react-icons/fa";
 import './AllAssignments.css';
 
 const { Title, Paragraph, Text, Link } = Typography;
@@ -7,6 +8,19 @@ const { Title, Paragraph, Text, Link } = Typography;
 class AllAssignments extends React.Component {
   constructor (props) {
     super(props)
+  }
+
+  handleAssignmentTitleClick = (assignment, isActive) => {
+    console.log('Assignment clicked:', assignment, 'isActive:', isActive);
+    // Здесь можно добавить логику для открытия задания
+  }
+
+  handleAssignmentFileDirectUpload = (event, assignment) => {
+    const file = event.target.files[0];
+    if (file) {
+      console.log('File selected:', file.name, 'for assignment:', assignment.title);
+      // Здесь можно добавить логику для загрузки файла
+    }
   }
 
   render() {
@@ -68,7 +82,6 @@ class AllAssignments extends React.Component {
               className="inner-assignment-card"
               key={idx}
               onClick={e => {
-                // Prevent modal if the click originated from a button or input inside the card
                 if (
                   e.target.tagName === "BUTTON" ||
                   e.target.tagName === "INPUT" ||
