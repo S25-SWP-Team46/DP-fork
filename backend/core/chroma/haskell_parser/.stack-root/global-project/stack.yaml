@@ -1,0 +1,10 @@
+# This is the implicit global project's configuration file, which is only used
+# when 'stack' is run outside of a real project. Settings here do _not_ act as
+# defaults for all projects. To change Stack's default settings, edit
+# 'D:\chroma_parser-1\.stack-root\config.yaml' instead.
+#
+# For more information about Stack's configuration, see
+# http://docs.haskellstack.org/en/stable/configure/yaml/
+#
+packages: []
+snapshot: lts-24.0

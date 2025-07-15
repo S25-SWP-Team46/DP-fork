@@ -89,23 +89,29 @@ class ChromaEngine:
 
 class QueryParser:
     @staticmethod
-    def parse(query: str) -> dict:
-        query = query.strip()
-        if not query:
-            raise ValueError("Empty query")
-
-        command = query.split()[0].upper()
-
-        if command == "ADD":
-            return QueryParser._parse_add(query)
-        elif command == "SEARCH":
-            return QueryParser._parse_search(query)
-        elif command == "GET":
-            return QueryParser._parse_get(query)
-        elif command == "DELETE":
-            return QueryParser._parse_delete(query)
-        else:
-            raise ValueError(f"Unknown command: {command}")
+    def parse(query: str) -> str:
+        import subprocess
+        import os
+        print(f"[DEBUG] QueryParser.parse called with query: {query}")
+        parser_path = os.environ.get("CHROMA_PARSER_PATH", "/app/chroma_parser_bin/chroma_parser")
+        print(f"[DEBUG] Using Haskell parser at: {parser_path}")
+        try:
+            result = subprocess.run(
+                [parser_path],
+                input=query.encode(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True
+            )
+            print(f"[DEBUG] Haskell parser stdout: {result.stdout.decode()}")
+            print(f"[DEBUG] Haskell parser stderr: {result.stderr.decode()}")
+            return result.stdout.decode().strip()
+        except subprocess.CalledProcessError as e:
+            print(f"[ERROR] Haskell parser failed with stderr: {e.stderr.decode().strip()}")
+            raise ValueError(f"Haskell parser error: {e.stderr.decode().strip()}")
+        except Exception as e:
+            print(f"[ERROR] Exception in QueryParser.parse: {e}")
+            raise ValueError(f"Haskell parser failed: {e}")
 
     @staticmethod
     def _parse_add(query: str) -> dict:
