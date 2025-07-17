@@ -1,7 +1,7 @@
 import React from "react"
 import './CreateArticle.css';
-//import { getProfiles, createClassroom } from '../../api';
-import { Modal, Input, Typography, Select, Button, notification } from "antd";
+import { getProfiles, createArticle } from "../../../../api";
+import { Modal, Input, Select, Button, notification } from "antd";
 
 const { Option } = Select;
 
@@ -16,7 +16,6 @@ class CreateArticle extends React.Component {
     }
   }
 
-  /*
   async componentDidMount() {
     const draft = localStorage.getItem('createArticleDraft');
     if (draft) {
@@ -34,7 +33,7 @@ class CreateArticle extends React.Component {
   saveDraft = () => {
     localStorage.setItem('createArticleDraft', JSON.stringify(this.state));
   }
-    */
+
   handleInputChange = (e) => {
     this.setState({ [e.target.name]: e.target.value }, this.saveDraft);
   }
@@ -43,9 +42,8 @@ class CreateArticle extends React.Component {
     this.setState({ authors: value }, this.saveDraft);
   };
 
-  /*
-  async addClassroom() {
-    const { title, description, tas, students, primaryInstructor } = this.state;
+  async addArticle() {
+    const { title, description, authors } = this.state;
     if ( title === "") {
       notification.warning({
         message: 'Classroom creation failed',
@@ -64,22 +62,17 @@ class CreateArticle extends React.Component {
       });
       return;
     } 
-    if (!tas || tas.length === 0) {
-      notification.warning({
-        message: 'Classroom creation failed',
-        description: 'Please, specify at least 1 TA',
-        placement: 'bottomRight',
-        duration: 3,
-      });
-      return;
-    }
-    const newClassroom = await createClassroom(title, description, tas, students, primaryInstructor);
-    if (newClassroom && this.props.onClassroomCreated) {
-      this.props.onClassroomCreated(newClassroom);
-      localStorage.removeItem('addClassroomDraft');
+    const newArticle = await createArticle(title, description, authors);
+    if (newArticle && this.props.onArticleCreated) {
+      this.props.onArticleCreated();
+      localStorage.removeItem('createArticleDraft');
     }
   }
-    */
+
+  cancelAdding = () => {
+    this.props.onArticleClose();
+    localStorage.removeItem('createArticleDraft')
+  };
 
   render() {
     const { open, onCancel} = this.props;

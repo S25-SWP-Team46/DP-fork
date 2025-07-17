@@ -1,7 +1,7 @@
 import React from "react"
 import './CreateAssignment.css';
 import dayjs from "dayjs";
-import { Modal, Input, Typography, Select, DatePicker, Button, notification } from "antd";
+import { Modal, Input, Select, DatePicker, Button, notification } from "antd";
 import { getProfiles, createAssignment } from "../../../../api";
 
 const { Option } = Select;
@@ -42,7 +42,7 @@ class CreateAssignment extends React.Component {
 
   async addAssignment() {
     const { title, description, openAt, closeAt } = this.state;
-    if ( title === "") {
+    if (title === "") {
       notification.warning({
         message: 'Classroom creation failed',
         description: 'Please, specify Classroom name',
@@ -50,7 +50,7 @@ class CreateAssignment extends React.Component {
         duration: 3,
       });
       return;
-    } 
+    }
     if (description === "") {
       notification.warning({
         message: 'Classroom creation failed',
@@ -59,13 +59,21 @@ class CreateAssignment extends React.Component {
         duration: 3,
       });
       return;
-    } 
-    const newClassroom = await createAssignment(title, description, openAt, closeAt, this.props.classroomID);
-    if (newClassroom && this.props.onAssignmentCreated) {
-      this.props.onAssignmentCreated();
-      localStorage.removeItem('addAssignmentDraft');
+    }
+    // Make sure to send classroom as a field if your API expects it
+    const newAssignment = await createAssignment(
+      title, description, openAt, closeAt, this.props.classroomID
+    );
+    if (newAssignment && this.props.onAssignmentCreated) {
+      this.props.onAssignmentCreated(); // This will close the modal and reload assignments
+      localStorage.removeItem('createAssignmentDraft');
     }
   }
+
+  cancelAdding = () => {
+    this.props.onAssignmentClose();
+    localStorage.removeItem('createAssignmentDraft')
+  };
 
   render() {
     const { open, onCancel} = this.props;
