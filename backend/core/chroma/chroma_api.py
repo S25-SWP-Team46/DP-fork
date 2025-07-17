@@ -172,11 +172,8 @@ async def query_parser(request: QueryParseRequest):
                         result = {"command": "UPDATE", "doc_id": doc_id, "status": "updated"}
             
             elif command == "DROP":
-                success = engine.drop_collection()
-                if success:
-                    result = {"command": "DROP", "status": "collection dropped"}
-                else:
-                    result = {"command": "DROP", "error": "Failed to drop collection"}
+                engine.drop_collection()
+                result = {"command": "DROP", "status": "collection dropped"}
             
             else:
                 result = {"command": command, "error": "Unknown command"}
