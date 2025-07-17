@@ -49,7 +49,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
     #capacity = serializers.IntegerField(read_only=True)
     class Meta:
         model = Classroom
-        fields = ['id', 'title', 'description', 'TA', 'primary_instructor', 'created_date', 'capacity', 'TA_names', 'primary_instructor_name']
+        fields = ['id', 'title', 'description', 'TA', 'primary_instructor', 'created_date', 'capacity', 'TA_names', 'primary_instructor_name', 'image']
 
     def get_TA_names(self, obj):
         return [ta.user.name for ta in obj.TA.all()]
@@ -88,10 +88,13 @@ class SubmissionSerializer(serializers.ModelSerializer):
         fields = ['id', 'student', 'student_name', 'student_email', 'assignment', 'query', 'feedback', 'created_at']
 
 class  ArticleSerializer(serializers.ModelSerializer):
-    author_name = serializers.CharField(source='author.user.name', read_only=True)
+    author_names = serializers.SerializerMethodField()
     class Meta:
         model = Article
-        fields = ['id', 'title', 'author', 'author_name', 'description', 'file']
+        fields = ['id', 'title', 'authors', 'author_names', 'description', 'file']
+
+    def get_author_names(self, obj):
+        return [ta.user.name for ta in obj.authors.all()]
 
 class ProfileSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.name', read_only=True)

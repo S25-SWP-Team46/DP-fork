@@ -15,6 +15,7 @@ services:
     build: ./backend/
     volumes:
       - ./backend/core:/app
+      - ./backend/core/media:/app/media
     ports:
       - "8000:8000"
     depends_on:

@@ -329,6 +329,15 @@ class ProfileViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
+    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsAuthenticated])
+    def me(self, request):
+        try:
+            profile = request.user.profile
+        except Profile.DoesNotExist:
+            return Response({'error': 'User profile not found'}, status=400)
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
 
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all()
@@ -342,6 +351,11 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response({'error': 'classroom_id is required'}, status=400)
 
         data = request.data.copy()
+        author_ids = data.get('authors', [])
+        if (not author_ids):
+            author_ids = data.get('authors')
+
+        data['authors'] = author_ids
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
