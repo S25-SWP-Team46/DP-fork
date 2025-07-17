@@ -19,7 +19,7 @@ class CreateAssignment extends React.Component {
   }
 
   async componentDidMount() {
-    const draft = localStorage.getItem('createArticleDraft');
+    const draft = localStorage.getItem('createAssignmentDraft');
     if (draft) {
       this.setState(JSON.parse(draft));
     }
