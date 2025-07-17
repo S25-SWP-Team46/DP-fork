@@ -112,7 +112,7 @@ export async function loginUser(name=null, password, role = "student") {
 
 export async function getMyProfile() {
   //const token = getCookie("access");
-  const res = await tokenUpdate(`${BASE_URL}/app/profiles/me/`, {
+  const res = await tokenUpdate(`${BASE_URL}/app/profile/me/`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

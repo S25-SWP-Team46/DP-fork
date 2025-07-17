@@ -128,7 +128,7 @@ class CreateArticle extends React.Component {
                     
             <Button className="add-button"
               type="primary"
-              onClick={() => this.addClassroom()}
+              onClick={() => this.addArticle()}
             >Add</Button>           
           </div>
         </form>

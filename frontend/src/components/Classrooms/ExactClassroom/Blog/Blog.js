@@ -79,9 +79,16 @@ class AllAssignments extends React.Component {
                 <MdOutlineArticle className="allArticle-icon" />
                 <span className="allArticle-title">{el.title}</span>
               </div>  
-              <Text className="allArticle-author">
-                {el.author}
-              </Text>
+              <div className="article-author">
+                    {el.authors && el.authors.length > 0
+                      ? el.authors.map((author, idx) =>
+                          <span key={author.id || idx}>
+                            {author.user_name || author.name || author}
+                            {idx < el.authors.length - 1 ? ', ' : ''}
+                          </span>
+                        )
+                      : "No authors"}
+                  </div>
               <Text className="allArticle-description">
                 {el.description}
                </Text>

@@ -400,10 +400,18 @@ class ExactClassroom extends React.Component {
                   <div className="article-header">
                     <MdOutlineArticle className="article-icon" />
                     <span className="article-title">{el.title}</span>
-                  </div>  
-                  <Text className="article-author">
-                    {el.author}
-                  </Text>
+                  </div> 
+
+                  <div className="article-author">
+                    {el.authors && el.authors.length > 0
+                      ? el.authors.map((author, idx) =>
+                          <span key={author.id || idx}>
+                            {author.user_name || author.name || author}
+                            {idx < el.authors.length - 1 ? ', ' : ''}
+                          </span>
+                        )
+                      : "No authors"}
+                  </div>
                   <Text className="article-description">
                     {el.description}
                   </Text>
