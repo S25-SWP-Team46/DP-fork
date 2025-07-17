@@ -168,11 +168,8 @@ async def query_parser(request: QueryParseRequest):
                     if existing_doc is None:
                         result = {"command": "UPDATE", "error": "Document not found"}
                     else:
-                        success = engine.update_document(doc_id=doc_id, text=text, metadata=metadata)
-                        if success:
-                            result = {"command": "UPDATE", "doc_id": doc_id, "status": "updated"}
-                        else:
-                            result = {"command": "UPDATE", "error": "Failed to update document"}
+                        engine.update_document(doc_id=doc_id, text=text, metadata=metadata)
+                        result = {"command": "UPDATE", "doc_id": doc_id, "status": "updated"}
             
             elif command == "DROP":
                 success = engine.drop_collection()
