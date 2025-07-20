@@ -79,17 +79,6 @@ class EditModal extends React.Component {
     const { name, email, school, description } = this.state;
     
     console.log("EditModal handleSave called with:", { name, email, school, description });
-    
-    if (name.trim() === "") {
-      console.log("Validation failed: name is empty");
-      notification.warning({
-        message: 'Name Required',
-        description: 'Please enter your name.',
-        placement: 'bottomRight',
-        duration: 3,
-      });
-      return;
-    }
 
     if (email.trim() === "") {
       notification.warning({
@@ -107,16 +96,6 @@ class EditModal extends React.Component {
       notification.warning({
         message: 'Invalid Email',
         description: 'Please enter a valid email address.',
-        placement: 'bottomRight',
-        duration: 3,
-      });
-      return;
-    }
-
-    if (name.length > 50) {
-      notification.warning({
-        message: 'Name Too Long',
-        description: 'Name must be no more than 50 characters.',
         placement: 'bottomRight',
         duration: 3,
       });
@@ -208,23 +187,10 @@ class EditModal extends React.Component {
             <TbPointFilled style={{ position: 'relative', top: '2px' }} /> 
             Edit your <Typography.Text className='modal-text' style={{ color: '#51CB63' }}>profile information</Typography.Text>
           </Typography.Text><br />
-          <div style={{ marginLeft: '20px', marginBottom: '20px' }}>
+          <div style={{ marginLeft: '16px', marginBottom: '20px' }}>
             <Typography.Text className='modal-text'>
               Update your personal information.
             </Typography.Text>
-          </div>
-
-          {/* Name Field */}
-          <div style={{ marginBottom: '15px' }}>
-            <Typography.Text className='modal-text' style={{ display: 'block' }}>
-              Name (required, no more than 50 characters)
-            </Typography.Text>
-            <Input
-              placeholder="Enter your name"
-              className="login"
-              value={name}
-              onChange={(e) => this.setState({ name: e.target.value })}
-            />
           </div>
 
           {/* Email Field */}
